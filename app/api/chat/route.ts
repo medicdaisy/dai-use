@@ -4,15 +4,15 @@ import { killDesktop } from "@/lib/e2b/utils";
 import { bashTool, computerTool } from "@/lib/e2b/tool";
 import { prunedMessages } from "@/lib/utils";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 300;
+// Allow streaming responses up to 60 seconds
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const { messages, sandboxId }: { messages: UIMessage[]; sandboxId: string } =
     await req.json();
   try {
     const result = streamText({
-      model: anthropic("claude-3-7-sonnet-20250219"), // Using Sonnet for computer use
+      model: anthropic("claude-3-7-sonnet-20250219"),
       system:
         "You are a helpful assistant with access to a computer. " +
         "Use the computer tool to help the user with their requests. " +
@@ -26,7 +26,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // Create response stream
     const response = result.toDataStreamResponse({
       // @ts-expect-error eheljfe
       getErrorMessage(error) {
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
     return response;
   } catch (error) {
     console.error("Chat API error:", error);
-    await killDesktop(sandboxId); // Force cleanup on error
+    await killDesktop(sandboxId);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
